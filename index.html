@@ -1,0 +1,195 @@
+<html>
+<body>
+
+<style>
+	html, body, .container
+{
+    height: 100%; 
+    min-height: 100%;
+}
+
+img{
+	height: 200px;
+}
+
+.sort li{
+  display: inline;
+  cursor:pointer;
+}
+.sort li:hover{
+	color:#277BCD;
+}
+
+.thumbnail{
+	cursor:pointer;
+}
+
+.cross{
+	left:93%;
+}
+
+</style>
+
+<div class="container">
+	<h3>SpringBoard Assignment</h3>
+	<div class="col-md-5">
+	<div class="form-group">
+	  <label for="usr">Add User:</label>
+	  <input type="text" class="form-control" id="usr">
+	</div>
+	<button id="submit" type="button" class="btn btn-primary">Submit</button>
+	</div>
+
+	<div class="clearfix"></div>
+	<div class="sort">
+		<ul>
+			<li>Sort By:<li>
+			<li><span id="#name" onclick="sortUsersAscending('name')">Name</span><li>
+			<li><span id="#location" onclick="sortUsersAscending('loc')">Location</span><li>
+			<li><span id="#follow" onclick="sortUsersAscending('follow')">Followers</span><li>
+		</ul>
+	</div>
+
+   <div class="row">
+  	
+	</div>
+</div>
+
+
+</body>
+</html>
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script type="text/javascript">
+/* global variable to hold users*/
+	var userData = [];
+</script>
+
+<script type="text/javascript">
+
+    function ajaxRequest(url, method, data, onSuccess,onFailure)
+{
+    $.ajax({
+        // headers: {
+        //     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+        //     'Client' : 'web'
+        // },
+        url: url,
+        data: data,
+        type: method,
+
+        success: function( json ) {
+            if ( typeof onSuccess !== 'undefined' && typeof onSuccess === "function") {
+                onSuccess(json);
+            }
+        },
+        error: function( xhr, status, errorThrown ) {
+            if ( typeof onFailure !== 'undefined' && typeof onFailure === "function") {
+                onFailure();
+            }
+        },
+        complete: function( xhr, status ) {
+        }
+    });
+}
+
+$("#submit").click(function(){
+    
+    var user = $("#usr").val();
+    if(user){
+    	var url = "https://api.github.com/users/" + user;
+    	ajaxRequest(url,'GET',null,filluser,userfailure);
+	}
+	else
+	alert('Please enter some user');
+});
+
+function userfailure(){
+	alert('User not found');
+	$('#usr').val('');
+}
+
+var count = 0;
+function filluser(data){
+		data.index = count;
+		++count;
+		userData.push(data);
+		var thumbnail = '<div class="col-sm-6 col-md-4"> <div class="thumbnail" data-index="'+ data.index +'"data-atr='+data.html_url+'> <span class="cross glyphicon glyphicon-remove"></span><img src="' + data.avatar_url + '"> <div class="caption"><h3>'+ data.name +'</h3><h4>'+ data.location +'<p>'+ data.followers +'</p></div></div></div>'; 
+
+	$('.row').append(thumbnail);
+ 	$('#usr').val('');
+}
+
+/* Custom comparators to sort data */
+function nameCompare(a, b) {
+	return a.name.localeCompare(b.name);
+}
+
+function locCompare(a, b) {
+	return a.location.localeCompare(b.location);
+}
+
+function followCompare(a, b) {
+	return a.followers - b.followers;
+}
+
+/* Sort function */
+function sortUsersAscending(key){
+	
+	var users = userData.slice();
+	
+	switch(key) {
+	case "name":
+		users.sort(nameCompare);
+		break;
+	case "loc":
+		users.sort(locCompare);
+		break;
+	case "follow":
+		users.sort(followCompare);
+		break;
+	}
+	refillDisplay(users);
+}
+
+function refillDisplay(users) {
+	$('.row').empty();
+	count = 0;
+	userData = [];
+	for(var i in users) {
+		filluser(users[i]);
+	}
+}
+
+$('.row').on('click','.cross',function(event){
+	event = event || window.event // cross-browser event
+    if (event.stopPropagation) {
+        // W3C standard variant
+        event.stopPropagation()
+    } else {
+        event.cancelBubble = true
+    }
+    var deleteUser = $(this).parent();
+    
+    var deleteIndex = Number(deleteUser.attr('data-index'));
+    userData.splice(deleteIndex,deleteIndex+1);
+
+	$(this).parent().parent().remove();
+});
+
+$('.row').on('click','.thumbnail',function(){
+	var user_link = $(this).attr('data-atr');
+
+	window.open(user_link,'_blank');
+});
+
+
+</script>
